@@ -1,0 +1,286 @@
+import { Helmet } from '@dr.pogodin/react-helmet';
+import { home } from 'virtual:content';
+import { useState, useEffect, useRef } from 'react';
+import { ContentListContext } from '@airo/content';
+
+function ParticleCanvas() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    let animId: number;
+    const resize = () => { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; };
+    resize();
+    window.addEventListener('resize', resize);
+    type Particle = { x: number; y: number; r: number; vx: number; vy: number; alpha: number };
+    const particles: Particle[] = Array.from({ length: 60 }, () => ({
+      x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+      r: Math.random() * 1.5 + 0.3, vx: (Math.random() - 0.5) * 0.3,
+      vy: -Math.random() * 0.4 - 0.1, alpha: Math.random() * 0.6 + 0.2,
+    }));
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (const p of particles) {
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(0,100%,27%,${p.alpha})`; ctx.fill();
+        p.x += p.vx; p.y += p.vy;
+        if (p.y < -4) { p.y = canvas.height + 4; p.x = Math.random() * canvas.width; }
+        if (p.x < -4) p.x = canvas.width + 4;
+        if (p.x > canvas.width + 4) p.x = -4;
+      }
+      animId = requestAnimationFrame(draw);
+    };
+    draw();
+    return () => { cancelAnimationFrame(animId); window.removeEventListener('resize', resize); };
+  }, []);
+  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" aria-hidden="true" />;
+}
+
+function DiscordIcon({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z" />
+    </svg>
+  );
+}
+
+export default function HomePage() {
+  const [copied, setCopied] = useState<string | null>(null);
+  const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  function handleCopy(id: string, text: string) {
+    navigator.clipboard.writeText(text).then(() => { setCopied(id); setTimeout(() => setCopied(null), 2000); });
+  }
+
+  return (
+    <>
+      <Helmet>
+        <title>Darkblood — Free Roblox Script Hub</title>
+        <meta name="description" content="Darkblood is a free, keyless Roblox script hub with high quality scripts for popular games. No keys, no paywalls." />
+        <link rel="canonical" href="https://darkblood.gg/" />
+        <meta property="og:title" content="Darkblood — Free Roblox Script Hub" />
+        <meta property="og:description" content="Free, keyless Roblox scripts for popular games. Join our Discord community." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://darkblood.gg/" />
+        <meta name="twitter:card" content="summary_large_image" />
+      </Helmet>
+
+      {/* HEADER */}
+      <header className="fixed top-0 left-0 right-0 z-50 h-16 transition-all duration-300"
+        style={{ background: scrolled ? 'hsl(var(--near-black) / 0.96)' : 'transparent', backdropFilter: scrolled ? 'blur(16px)' : 'none', borderBottom: scrolled ? '1px solid hsl(var(--border))' : '1px solid transparent' }}>
+        <div className="flex items-center justify-between px-5 md:px-14 h-full">
+          <a href="/" className="flex items-center shrink-0">
+            <span className="font-black uppercase tracking-widest" style={{ fontFamily: 'var(--font-heading)', fontSize: '22px', background: 'linear-gradient(180deg, hsl(var(--white-full)) 0%, hsl(var(--primary)) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', filter: 'drop-shadow(0 0 10px hsl(var(--primary) / 0.5))' }}>
+              Darkblood
+            </span>
+          </a>
+          <nav aria-label="Main navigation" className="hidden md:flex items-center gap-7">
+            <a href={home.hero.ctaUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-white transition-colors" style={{ fontFamily: 'var(--font-sans)' }}>
+              <DiscordIcon size={14} /><span>Discord</span>
+            </a>
+            <a href="/" className="text-sm font-medium text-white transition-colors" style={{ fontFamily: 'var(--font-sans)' }}>Home</a>
+            <a href="/scripts" className="text-sm font-medium text-muted-foreground hover:text-white transition-colors" style={{ fontFamily: 'var(--font-sans)' }}>Scripts</a>
+            <a href="/faq" className="text-sm font-medium text-muted-foreground hover:text-white transition-colors" style={{ fontFamily: 'var(--font-sans)' }}>FAQ</a>
+          </nav>
+          <button className="md:hidden flex flex-col justify-center items-center w-9 h-9 gap-1.5" aria-label={menuOpen ? 'Close menu' : 'Open menu'} onClick={() => setMenuOpen(o => !o)}>
+            <span className="block w-5 h-0.5 bg-white transition-all" style={{ transform: menuOpen ? 'translateY(8px) rotate(45deg)' : 'none' }} />
+            <span className="block w-5 h-0.5 bg-white transition-all" style={{ opacity: menuOpen ? 0 : 1 }} />
+            <span className="block w-5 h-0.5 bg-white transition-all" style={{ transform: menuOpen ? 'translateY(-8px) rotate(-45deg)' : 'none' }} />
+          </button>
+        </div>
+        {menuOpen && (
+          <nav aria-label="Mobile navigation" className="md:hidden flex flex-col px-5 pb-4 gap-3" style={{ background: 'hsl(var(--near-black) / 0.98)', borderBottom: '1px solid hsl(var(--border))' }}>
+            <a href={home.hero.ctaUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm font-medium text-muted-foreground py-2" style={{ fontFamily: 'var(--font-sans)' }} onClick={() => setMenuOpen(false)}>
+              <DiscordIcon size={14} /><span>Discord</span>
+            </a>
+            <a href="/" className="text-sm font-medium text-white py-2" style={{ fontFamily: 'var(--font-sans)' }} onClick={() => setMenuOpen(false)}>Home</a>
+            <a href="/scripts" className="text-sm font-medium text-muted-foreground py-2" style={{ fontFamily: 'var(--font-sans)' }} onClick={() => setMenuOpen(false)}>Scripts</a>
+            <a href="/faq" className="text-sm font-medium text-muted-foreground py-2" style={{ fontFamily: 'var(--font-sans)' }} onClick={() => setMenuOpen(false)}>FAQ</a>
+          </nav>
+        )}
+      </header>
+
+      {/* HERO */}
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 50%, hsl(var(--primary) / 0.30) 0%, hsl(var(--near-black)) 70%)' }} />
+        <div className="absolute bottom-0 left-0 right-0 h-40 pointer-events-none" style={{ background: 'linear-gradient(to bottom, transparent, hsl(var(--near-black)))' }} />
+        <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'linear-gradient(hsl(var(--primary) / 0.07) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary) / 0.07) 1px, transparent 1px)', backgroundSize: '80px 80px' }} />
+        <ParticleCanvas />
+        <div className="relative z-10 flex flex-col items-center text-center px-6 max-w-3xl mx-auto pt-20">
+          <div className="mb-6 relative">
+            <h1 className="block font-black uppercase tracking-widest" style={{ fontFamily: 'var(--font-heading)', fontSize: 'clamp(52px, 10vw, 88px)', lineHeight: 1, background: 'linear-gradient(180deg, hsl(var(--white-full)) 0%, hsl(var(--primary)) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', filter: 'drop-shadow(0 0 32px hsl(var(--primary) / 0.6))' }}>
+              <span>{home.hero.headline}</span>
+            </h1>
+            <span className="absolute inset-0 block font-black uppercase tracking-widest pointer-events-none select-none" aria-hidden="true" style={{ fontFamily: 'var(--font-heading)', fontSize: 'clamp(52px, 10vw, 88px)', lineHeight: 1, color: 'hsl(var(--primary))', filter: 'blur(28px)', opacity: 0.35 }}>
+              {home.hero.headline}
+            </span>
+          </div>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mb-5 border" style={{ background: 'hsl(var(--primary) / 0.15)', borderColor: 'hsl(var(--primary) / 0.4)', color: 'hsl(var(--primary))', fontFamily: 'var(--font-sans)' }}>
+            <span className="w-1.5 h-1.5 rounded-full bg-primary inline-block" />Free &amp; Keyless
+          </span>
+          <p className="text-muted-foreground mb-3 max-w-md text-base leading-relaxed" style={{ fontFamily: 'var(--font-sans)' }}><span>{home.hero.subheading}</span></p>
+          <p className="text-muted-foreground mb-8 max-w-md text-sm leading-relaxed italic" style={{ fontFamily: 'var(--font-sans)', color: 'hsl(var(--primary) / 0.85)' }}><span>{home.hero.notice}</span></p>
+          <div className="flex flex-col sm:flex-row gap-3 items-center">
+            <a href={home.hero.ctaUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-7 py-3 rounded-full font-semibold text-sm transition-all duration-200 hover:scale-105 bg-primary text-primary-foreground" style={{ fontFamily: 'var(--font-sans)', boxShadow: '0 0 24px hsl(var(--primary) / 0.5)' }}>
+              <DiscordIcon size={16} /><span>{home.hero.ctaText}</span>
+            </a>
+            <a href="#scripts" className="inline-flex items-center gap-2 px-7 py-3 rounded-full font-semibold text-sm border transition-all duration-200 hover:border-primary hover:text-white text-muted-foreground" style={{ borderColor: 'hsl(var(--border))', fontFamily: 'var(--font-sans)' }}>View Scripts ↓</a>
+          </div>
+          <p className="mt-6 text-xs text-muted-foreground" style={{ fontFamily: 'var(--font-sans)' }}><span>{home.hero.distributorLabel}</span></p>
+        </div>
+      </section>
+
+      {/* ANNOUNCEMENT */}
+      <section className="w-full py-16 text-center relative overflow-hidden" style={{ background: 'hsl(var(--pure-black))' }}>
+        <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 60% 100% at 50% 50%, hsl(var(--primary) / 0.12) 0%, transparent 70%)' }} />
+        <div className="relative z-10 flex flex-col items-center gap-3">
+          <div className="w-12 h-px mb-2 bg-primary" />
+          <h2 className="text-white font-light" style={{ fontFamily: 'var(--font-heading)', fontSize: '38px', lineHeight: '56px', fontWeight: 300 }}><span>{home.announcement.heading}</span></h2>
+          <div className="w-12 h-px mt-2 bg-primary" />
+        </div>
+      </section>
+
+      {/* SCRIPTS */}
+      <section id="scripts" className="py-24 px-6 bg-background">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-14">
+            <p className="text-xs font-semibold uppercase tracking-widest mb-3 text-primary" style={{ fontFamily: 'var(--font-sans)' }}>Script Library</p>
+            <h2 className="text-white font-light" style={{ fontFamily: 'var(--font-heading)', fontSize: '32px', lineHeight: '48px', fontWeight: 300 }}><span>{home.games.heading}</span></h2>
+          </div>
+          <ContentListContext field="home.games.items">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {home.games.items.map((item) => (
+                <div key={item.id} className="rounded-2xl overflow-hidden border border-border bg-card transition-all duration-300 hover:-translate-y-2 group" style={{ boxShadow: '0 4px 32px hsl(var(--pure-black) / 0.5)' }}>
+                  <div className="relative overflow-hidden" style={{ aspectRatio: '16/9' }}>
+                    <img src="/airo-assets/images/pages/home/game-timebomb" alt={item.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" width={768} height={432} />
+                    <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(to top, hsl(var(--pure-black) / 0.7) 0%, transparent 50%)' }} />
+                    <span className="absolute top-3 left-3 text-xs font-bold px-2.5 py-1 rounded-full bg-primary text-primary-foreground" style={{ fontFamily: 'var(--font-sans)', boxShadow: '0 0 12px hsl(var(--primary) / 0.6)' }}><span>{item.tag}</span></span>
+                    <div className="absolute bottom-3 left-3">
+                      <p className="text-foreground font-bold text-sm" style={{ fontFamily: 'var(--font-heading)' }}><span>{item.name}</span></p>
+                      <p className="text-xs text-muted-foreground" style={{ fontFamily: 'var(--font-sans)' }}><span>{item.game}</span></p>
+                    </div>
+                  </div>
+                  <div className="p-5">
+                    <div className="rounded-xl p-3 mb-4 font-mono text-xs break-all select-all border" style={{ background: 'hsl(var(--primary) / 0.08)', borderColor: 'hsl(var(--primary) / 0.3)', lineHeight: '1.6' }}>
+                      <span className="text-primary font-semibold">loadstring</span><span className="text-muted-foreground">(game:HttpGet(</span><span className="text-accent">"https://pastefy.app/qI1Eygcl/raw"</span><span className="text-muted-foreground">))()</span>
+                    </div>
+                    <button onClick={() => handleCopy(item.id, item.loadstring)} className="w-full py-2.5 rounded-xl text-sm font-bold transition-all duration-200 hover:scale-[1.02] bg-primary text-primary-foreground" style={{ fontFamily: 'var(--font-sans)', boxShadow: '0 0 16px hsl(var(--primary) / 0.4)' }}>
+                      {copied === item.id ? '✓ Copied to clipboard!' : '⧉ Copy Script'}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ContentListContext>
+        </div>
+      </section>
+
+      {/* FEATURES */}
+      <section id="features" className="py-24 px-6 bg-muted">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-16">
+            <p className="text-xs font-semibold uppercase tracking-widest mb-3 text-primary" style={{ fontFamily: 'var(--font-sans)' }}>Why Darkblood</p>
+            <h2 className="text-white font-light" style={{ fontFamily: 'var(--font-heading)', fontSize: '38px', lineHeight: '56px', fontWeight: 300 }}><span>{home.features.heading}</span></h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-14 items-center mb-24">
+            <div className="rounded-2xl overflow-hidden aspect-video border border-border flex items-center justify-center" style={{ background: 'hsl(var(--pure-black))', boxShadow: '0 0 40px hsl(var(--primary) / 0.20)', borderColor: 'hsl(var(--primary) / 0.25)' }}>
+              <img src="/airo-assets/images/logo/horizontal" alt="Darkblood" className="w-auto max-w-[70%] h-auto object-contain" loading="lazy" width={500} height={200} />
+            </div>
+            <div>
+              <div className="w-8 h-0.5 mb-5 bg-primary" />
+              <h3 className="text-white font-light mb-4" style={{ fontFamily: 'var(--font-heading)', fontSize: '28px', lineHeight: '42px', fontWeight: 300 }}><span>{home.features.row1.heading}</span></h3>
+              <p className="text-muted-foreground leading-relaxed" style={{ fontFamily: 'var(--font-sans)', fontSize: '15px', lineHeight: '26px' }}><span>{home.features.row1.body}</span></p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-14 items-center">
+            <div className="order-2 md:order-1">
+              <div className="w-8 h-0.5 mb-5 bg-primary" />
+              <h3 className="text-white font-light mb-4" style={{ fontFamily: 'var(--font-heading)', fontSize: '28px', lineHeight: '42px', fontWeight: 300 }}><span>{home.features.row2.heading}</span></h3>
+              <p className="text-muted-foreground leading-relaxed" style={{ fontFamily: 'var(--font-sans)', fontSize: '15px', lineHeight: '26px' }}><span>{home.features.row2.body}</span></p>
+            </div>
+            <div className="order-1 md:order-2 rounded-2xl overflow-hidden aspect-video border flex items-center justify-center bg-card" style={{ borderColor: 'hsl(var(--primary) / 0.3)', background: 'radial-gradient(ellipse at center, hsl(var(--primary) / 0.18) 0%, hsl(var(--card)) 70%)', boxShadow: '0 0 40px hsl(var(--primary) / 0.12)' }}>
+              <div className="p-6 font-mono text-sm space-y-1.5 w-full max-w-xs">
+                <div><span className="text-primary">loadstring</span><span className="text-muted-foreground">(</span></div>
+                <div className="pl-4"><span className="text-muted-foreground">game:HttpGet(</span></div>
+                <div className="pl-8 text-accent">"https://pastefy.app/..."</div>
+                <div className="pl-4"><span className="text-muted-foreground">)</span></div>
+                <div><span className="text-muted-foreground">)()</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section id="faq" className="py-24 px-6 bg-background">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-12">
+            <p className="text-xs font-semibold uppercase tracking-widest mb-3 text-primary" style={{ fontFamily: 'var(--font-sans)' }}>Help</p>
+            <h2 className="text-white font-light" style={{ fontFamily: 'var(--font-heading)', fontSize: '38px', lineHeight: '56px', fontWeight: 300 }}><span>{home.faq.heading}</span></h2>
+            <p className="text-muted-foreground mt-3 text-sm" style={{ fontFamily: 'var(--font-sans)' }}>
+              Still have questions?{' '}
+              <a href={home.faq.discordUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline"><span>{home.faq.discordLinkText}</span></a>
+            </p>
+          </div>
+          <ContentListContext field="home.faq.items">
+            <div className="space-y-3">
+              {home.faq.items.map((item) => (
+                <div key={item.id} className="rounded-2xl p-6 bg-card border border-border transition-all duration-200 hover:border-primary">
+                  <h3 className="text-white font-semibold mb-2 flex items-center gap-2" style={{ fontFamily: 'var(--font-heading)', fontSize: '15px' }}>
+                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-primary" /><span>{item.question}</span>
+                  </h3>
+                  <p className="text-muted-foreground pl-3.5" style={{ fontFamily: 'var(--font-sans)', fontSize: '14px', lineHeight: '22px' }}><span>{item.answer}</span></p>
+                </div>
+              ))}
+            </div>
+          </ContentListContext>
+        </div>
+      </section>
+
+      {/* CTA BAND */}
+      <section className="relative py-36 px-6 overflow-hidden">
+        <img src="/airo-assets/images/pages/home/cta-bg" alt="" className="absolute inset-0 w-full h-full object-cover" aria-hidden="true" loading="lazy" width={1600} height={600} />
+        <div className="absolute inset-0 pointer-events-none" style={{ background: 'hsl(var(--pure-black) / 0.78)' }} />
+        <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 60% 80% at 50% 50%, hsl(var(--primary) / 0.18) 0%, transparent 70%)' }} />
+        <div className="relative z-10 flex flex-col items-center text-center max-w-2xl mx-auto">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mb-6 border" style={{ background: 'hsl(var(--primary) / 0.15)', borderColor: 'hsl(var(--primary) / 0.4)', color: 'hsl(var(--primary))', fontFamily: 'var(--font-sans)' }}>
+            <span className="w-1.5 h-1.5 rounded-full bg-primary inline-block" />100% Free
+          </span>
+          <h2 className="text-white font-bold mb-4" style={{ fontFamily: 'var(--font-heading)', fontSize: 'clamp(36px, 7vw, 64px)', lineHeight: 1.1, textShadow: '0 0 40px hsl(var(--primary) / 0.4)' }}><span>{home.cta.heading}</span></h2>
+          <p className="text-muted-foreground mb-8 text-base" style={{ fontFamily: 'var(--font-sans)' }}><span>{home.cta.subtext}</span></p>
+          <a href={home.cta.ctaUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full font-bold text-sm transition-all duration-200 hover:scale-105 bg-primary text-primary-foreground" style={{ fontFamily: 'var(--font-sans)', boxShadow: '0 0 32px hsl(var(--primary) / 0.55)' }}>
+            <DiscordIcon size={16} /><span>{home.cta.ctaText}</span>
+          </a>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer style={{ background: 'hsl(var(--pure-black))', borderTop: '1px solid hsl(var(--border))' }}>
+        <div className="max-w-5xl mx-auto px-6 py-14 grid grid-cols-1 md:grid-cols-2 gap-10">
+          <div>
+            <span className="block font-black uppercase tracking-widest text-xl mb-4" style={{ fontFamily: 'var(--font-heading)', background: 'linear-gradient(90deg, hsl(var(--white-full)) 0%, hsl(var(--primary)) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}><span>{home.footer.wordmark}</span></span>
+            <p className="text-muted-foreground text-sm leading-relaxed max-w-sm" style={{ fontFamily: 'var(--font-sans)' }}><span>{home.footer.disclaimer}</span></p>
+          </div>
+          <div>
+            <p className="text-white font-semibold mb-4" style={{ fontFamily: 'var(--font-heading)' }}><span>{home.footer.discordHeading}</span></p>
+            <a href={home.footer.discordUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-white transition-colors" style={{ fontFamily: 'var(--font-sans)' }}>
+              <DiscordIcon size={15} /><span>{home.footer.discordText}</span>
+            </a>
+          </div>
+        </div>
+        <div className="border-t px-6 py-5 flex items-center justify-center" style={{ borderColor: 'hsl(var(--border))' }}>
+          <p className="text-muted-foreground text-xs" style={{ fontFamily: 'var(--font-sans)' }}><span>{home.footer.copyright}</span></p>
+        </div>
+      </footer>
+    </>
+  );
+}
